@@ -1,0 +1,14 @@
+def defaultPipeline(nodever='java8', cred=null, osbc=null, osproject=null, tags=null, buildSteps=null, publish=null, testaccount=null, notest=false){
+  dir('src'){
+    stage ('Build app') {
+      GIT_COMMIT_HASH = sh (script: "git log -n 1 --pretty=format:'%H'", returnStdout: true)
+      sh "mvn clean -Dpipeline.warName=${osbc} -Dsource.version=${GIT_COMMIT_HASH}"
+    }
+  }
+
+
+
+
+}
+
+return this;
