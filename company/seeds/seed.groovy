@@ -3,7 +3,7 @@
 def deployment_pipelines = [
   [
     repository: "suttiruk046/sb-helloworld",
-    jobfolder: "ktaxa",
+    jobfolder: "company",
     jobname: "sb-helloworld",
     nodever: "java8",
     osbc: "sb-helloworld",
