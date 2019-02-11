@@ -1,17 +1,30 @@
 def defaultPipeline(nodever='java8', cred=null, osbc=null, osproject=null, tags=null, buildSteps=null, publish=null, testaccount=null, notest=false){
-  dir('src'){
-    stage ('Build app') {
-      //GIT_COMMIT_HASH = sh (script: "git log -n 1 --pretty=format:'%H'", returnStdout: true)
-      //sh "mvn clean -Dpipeline.warName=${osbc} -Dsource.version=${GIT_COMMIT_HASH}"
-      GIT_COMMIT_HASH = sh (script: "git log -n 1 --pretty=format:'%H'", returnStdout: true)
-      APPLICATION_VERSION = sh (script: "mvn org.apache.maven.plugins:maven-help-plugin:2.1.1:evaluate -Dexpression=project.version | grep -v '\\['", returnStdout: true) 
-      sh "mvn clean package -Dpipeline.warName=${osbc} -Dsource.version=${APPLICATION_VERSION}"
+  try {
+    dir('src'){
+      stage ('Build app') {
+        //GIT_COMMIT_HASH = sh (script: "git log -n 1 --pretty=format:'%H'", returnStdout: true)
+        //sh "mvn clean -Dpipeline.warName=${osbc} -Dsource.version=${GIT_COMMIT_HASH}"
+        GIT_COMMIT_HASH = sh (script: "git log -n 1 --pretty=format:'%H'", returnStdout: true)
+        APPLICATION_VERSION = sh (script: "mvn org.apache.maven.plugins:maven-help-plugin:2.1.1:evaluate -Dexpression=project.version | grep -v '\\['", returnStdout: true) 
+        sh "mvn clean package -Dpipeline.warName=${osbc} -Dsource.version=${APPLICATION_VERSION}"
+      }
+
+      stage ('Deploy') {
+        // sh "mvn tomcat7:redeploy-only -Dpipeline.warName=${osbc} -Dsource.version=${APPLICATION_VERSION} -Djavax.net.ssl.trustStore=c:/\"Program Files (x86)\"/Jenkins/keystore.jks -Djavax.net.ssl.keyStorePassword=${JENKINS_KEYSTORE_PASSWORD} -s /config/server-settings.xml -X"
+        sh "mvn tomcat7:redeploy-only -Dpipeline.warName=${osbc} -Dsource.version=${APPLICATION_VERSION} -s /config/server-settings.xml -X"
+      }
     }
-    
-    stage ('Deploy') {
-      // sh "mvn tomcat7:redeploy-only -Dpipeline.warName=${osbc} -Dsource.version=${APPLICATION_VERSION} -Djavax.net.ssl.trustStore=c:/\"Program Files (x86)\"/Jenkins/keystore.jks -Djavax.net.ssl.keyStorePassword=${JENKINS_KEYSTORE_PASSWORD} -s /config/server-settings.xml -X"
-      sh "mvn tomcat7:redeploy-only -Dpipeline.warName=${osbc} -Dsource.version=${APPLICATION_VERSION} -s /config/server-settings.xml -X"
-    }
+  } catch (exc) {
+    mail to:"somebody@yoohoo.com", subject:"FAILURE: ${currentBuild.fullDisplayName}", body: "Please go to ${BUILD_URL} and verify the build"
+    mail to:"anotherbody@googic.com", subject:"FAILURE: ${currentBuild.fullDisplayName}", body: "Please go to ${BUILD_URL} and verify the build"
+    throw exc
+  } finally {
+    /* echo currentBuild.result
+    if (currentBuild.result == 'UNSTABLE') {
+      echo 'I am unstable :/'
+    } else {
+      echo 'One way or another, I have finished'
+    } */
   }
 }
 
